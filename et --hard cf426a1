@@ -1,0 +1,10 @@
+[33mccfc217[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{0}: pull origin main --rebase (finish): returning to refs/heads/main
+[33mccfc217[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{1}: pull origin main --rebase (pick): Save local work before pulling
+[33meeceaa1[m[33m ([m[1;31morigin/main[m[33m)[m HEAD@{2}: pull origin main --rebase (start): checkout eeceaa165542cf4a798e67a385f9d51488993a9a
+[33mcf426a1[m HEAD@{3}: commit (merge): Add my completed features
+[33m6859e38[m HEAD@{4}: commit: Save local work before pulling
+[33m35555e1[m HEAD@{5}: pull origin main --rebase (finish): returning to refs/heads/main
+[33m35555e1[m HEAD@{6}: pull origin main --rebase (pick): Initial commit
+[33me208acd[m HEAD@{7}: pull origin main --rebase (start): checkout e208acddef59bd2c0734c09faa089538a586e925
+[33m601d8c6[m HEAD@{8}: Branch: renamed refs/heads/master to refs/heads/main
+[33m601d8c6[m HEAD@{10}: commit (initial): Initial commit
