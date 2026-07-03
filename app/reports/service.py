@@ -1,7 +1,8 @@
-from datetime import datetime
+from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.common.enums import LeaveStatus
 from app.leave_types.repository import LeaveTypeRepository
 from app.reports.repository import ReportRepository
 from app.reports.schema import (
@@ -25,11 +26,22 @@ class ReportService:
         self,
         db: AsyncSession,
         current_user: User,
+        department_id: UUID | None = None,
+        manager_id: UUID | None = None,
+        employee_id: UUID | None = None,
+        status: LeaveStatus | None = None,
+        page: int = 1,
+        page_size: int = 10,
     ) -> list[EmployeeReportResponse]:
 
         employees = await self.repository.get_accessible_employees(
-            db,
-            current_user,
+            db=db,
+            current_user=current_user,
+            department_id=department_id,
+            manager_id=manager_id,
+            employee_id=employee_id,
+            page=page,
+            page_size=page_size,
         )
 
         reports = []
@@ -46,16 +58,19 @@ class ReportService:
             total_requests = await self.repository.get_total_leave_requests(
                 db,
                 employee.id,
+                status,
             )
 
             paid_used = await self.repository.get_paid_leave_used(
                 db,
                 employee.id,
+                status if status else LeaveStatus.APPROVED,
             )
 
             breakdown = await self.repository.get_leave_type_breakdown(
                 db,
                 employee.id,
+                status,
             )
 
             leave_breakdown = [
@@ -93,21 +108,20 @@ class ReportService:
         self,
         db: AsyncSession,
         current_user: User,
+        department_id: UUID | None = None,
+        page: int = 1,
+        page_size: int = 10,
     ) -> list[DepartmentReportResponse]:
 
         employees = await self.repository.get_accessible_employees(
-            db,
-            current_user,
+            db=db,
+            current_user=current_user,
+            department_id=department_id,
+            page=page,
+            page_size=page_size,
         )
 
         department_map = {}
-
-        leave_types = await self.leave_type_repository.get_all(db)
-
-        total_paid_days = sum(
-            leave_type.max_days_per_year
-            for leave_type in leave_types
-        )
 
         for employee in employees:
 
@@ -150,7 +164,6 @@ class ReportService:
                     total_employees=department["total_employees"],
                     total_leave_requests=department["total_leave_requests"],
                     paid_leave_used=department["paid_leave_used"],
-                    
                 )
             )
 
@@ -184,5 +197,5 @@ class ReportService:
             pending_requests=pending or 0,
             rejected_requests=rejected or 0,
             cancelled_requests=cancelled or 0,
-            approved_leave_days=paid_used or 0,
+            paid_leave_used=paid_used or 0,
         )
