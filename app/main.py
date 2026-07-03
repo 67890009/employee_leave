@@ -8,8 +8,10 @@ import app.db.model
 from app.users.router import router as users_router
 from app.leave_requests.router import router as leave_request_router
 from app.departments.router import router as departments_router
+from app.common.exceptions import register_exception_handlers
 
 app = FastAPI()
+register_exception_handlers(app)
 app.include_router(leave_type_router)
 app.include_router(auth_router)
 app.include_router(users_router)
