@@ -16,6 +16,11 @@ class ReportRepository:
         self,
         db: AsyncSession,
         current_user: User,
+        department_id: UUID | None = None,
+        manager_id: UUID | None = None,
+        employee_id: UUID | None = None,
+        page: int = 1,
+        page_size: int = 10,
     ) -> list[User]:
 
         stmt = (
@@ -26,21 +31,52 @@ class ReportRepository:
             )
         )
 
-        if current_user.role.name in ["ADMIN", "HR"]:
+        # -----------------------------
+        # Role Based Access
+        # -----------------------------
 
-            stmt = stmt.order_by(User.first_name)
+        if current_user.role.name in ["ADMIN", "HR"]:
+            pass
 
         elif current_user.role.name == "MANAGER":
-
             stmt = stmt.where(
                 User.manager_id == current_user.id
             )
 
         else:
-
             stmt = stmt.where(
                 User.id == current_user.id
             )
+
+        # -----------------------------
+        # Filters
+        # -----------------------------
+
+        if department_id:
+            stmt = stmt.where(
+                User.department_id == department_id
+            )
+
+        if manager_id:
+            stmt = stmt.where(
+                User.manager_id == manager_id
+            )
+
+        if employee_id:
+            stmt = stmt.where(
+                User.id == employee_id
+            )
+
+        # -----------------------------
+        # Pagination
+        # -----------------------------
+
+        stmt = (
+            stmt
+            .order_by(User.first_name)
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
 
         result = await db.execute(stmt)
 
@@ -50,6 +86,7 @@ class ReportRepository:
         self,
         db: AsyncSession,
         employee_id: UUID,
+        status: LeaveStatus | None = None,
     ):
 
         stmt = (
@@ -64,9 +101,15 @@ class ReportRepository:
             .where(
                 LeaveRequest.employee_id == employee_id,
             )
-            .group_by(
-                LeaveType.name,
+        )
+
+        if status:
+            stmt = stmt.where(
+                LeaveRequest.status == status
             )
+
+        stmt = stmt.group_by(
+            LeaveType.name,
         )
 
         result = await db.execute(stmt)
@@ -77,6 +120,7 @@ class ReportRepository:
         self,
         db: AsyncSession,
         employee_id: UUID,
+        status: LeaveStatus = LeaveStatus.APPROVED,
     ):
 
         stmt = (
@@ -85,7 +129,7 @@ class ReportRepository:
                     func.sum(
                         case(
                             (
-                                LeaveRequest.status == LeaveStatus.APPROVED,
+                                LeaveRequest.status == status,
                                 LeaveRequest.number_of_days,
                             ),
                             else_=0,
@@ -107,6 +151,7 @@ class ReportRepository:
         self,
         db: AsyncSession,
         employee_id: UUID,
+        status: LeaveStatus | None = None,
     ):
 
         stmt = (
@@ -119,6 +164,11 @@ class ReportRepository:
                 LeaveRequest.employee_id == employee_id,
             )
         )
+
+        if status:
+            stmt = stmt.where(
+                LeaveRequest.status == status
+            )
 
         result = await db.execute(stmt)
 

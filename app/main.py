@@ -10,7 +10,6 @@ from app.leave_requests.router import router as leave_request_router
 from app.departments.router import router as departments_router
 from app.common.exceptions import register_exception_handlers
 from app.reports.router import router as report_router
-
 app = FastAPI()
 register_exception_handlers(app)
 app.include_router(leave_type_router)
