@@ -103,7 +103,7 @@ class LeaveTypeService:
         self,
         db: AsyncSession,
         leave_type_id: UUID
-    ) -> None:
+    ) -> LeaveType:
 
         leave_type = await self.repository.get_by_id(db, leave_type_id)
 
@@ -112,5 +112,10 @@ class LeaveTypeService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Leave type not found."
             )
-
-        await self.repository.delete(db, leave_type)
+        if not leave_type.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Leave type is already inactive.'
+            )
+        leave_type.is_active = False
+        return await self.repository.update(db, leave_type)
