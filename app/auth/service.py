@@ -118,3 +118,26 @@ class AuthService:
             )
 
         return user
+    
+    @staticmethod
+    async def login_with_google_email(db: AsyncSession, email: str) -> TokenResponse:
+        user = await AuthRepository.get_user_by_email(db=db, email=email)
+
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No account exists for this email. Contact your administrator.",
+            )
+
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User account is inactive.",
+            )
+
+        payload = {"sub": str(user.id), "role": user.role.value}
+        access_token = create_access_token(payload)
+        refresh_token = create_refresh_token(payload)
+
+        return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+    

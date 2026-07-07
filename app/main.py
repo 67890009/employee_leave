@@ -10,8 +10,10 @@ from app.leave_requests.router import router as leave_request_router
 from app.departments.router import router as departments_router
 from app.common.exceptions import register_exception_handlers
 from app.reports.router import router as report_router
+from starlette.middleware.sessions import SessionMiddleware
 app = FastAPI()
 register_exception_handlers(app)
+app.add_middleware(SessionMiddleware, secret_key=settings.JWT_SECRET_KEY)
 app.include_router(leave_type_router)
 app.include_router(auth_router)
 app.include_router(users_router)

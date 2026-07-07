@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request, HTTPException, status
+from starlette.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.auth.oauth import oauth
 from app.auth.dependencies import get_current_employee
 from app.auth.schemas import (
     AccessTokenResponse,
@@ -73,3 +74,19 @@ async def get_logged_in_user(
         "manager_id": current_user.manager_id,
         "is_active": current_user.is_active,
     }
+
+@router.get("/google/login")
+async def google_login(request: Request):
+    redirect_uri = request.url_for("google_callback")
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+
+@router.get("/google/callback", name="google_callback")
+async def google_callback(request: Request, db: AsyncSession = Depends(get_db)):
+    token = await oauth.google.authorize_access_token(request)
+    user_info = token.get("userinfo")
+
+    if user_info is None or "email" not in user_info:
+        raise HTTPException(status_code=400, detail="Could not retrieve email from Google.")
+
+    return await AuthService.login_with_google_email(db=db, email=user_info["email"])
